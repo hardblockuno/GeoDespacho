@@ -1,0 +1,24 @@
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dependencias / temporales
+node_modules/
+*.log
+*.tmp
+.env
+.env.*
+
+# Capas fuente y respaldos pesados
+# El sitio publicado usa solo /data. Los originales KML/KMZ,
+# respaldos y conversiones historicas se conservan localmente.
+capas_oficiales_2025/
+capas_oficiales_2025_2026/
+
+# Metadatos sensibles o de trabajo
+*.xlsx
+*.xls
+*.zip
+AGENTS.md.txt

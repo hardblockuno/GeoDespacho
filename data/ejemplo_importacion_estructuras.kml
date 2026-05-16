@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Estructuras criticas importadas</name>
+    <Placemark>
+      <name>Centro logistico forestal</name>
+      <ExtendedData>
+        <Data name="tipo"><value>Logistica</value></Data>
+        <Data name="criticidad"><value>Alta</value></Data>
+        <Data name="estado"><value>Operativa</value></Data>
+      </ExtendedData>
+      <Point>
+        <coordinates>-72.5181,-37.6245,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Antena repetidora emergencia</name>
+      <ExtendedData>
+        <Data name="tipo"><value>Telecomunicaciones</value></Data>
+        <Data name="criticidad"><value>Media</value></Data>
+        <Data name="estado"><value>Operativa</value></Data>
+      </ExtendedData>
+      <Point>
+        <coordinates>-72.2674,-37.8912,0</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>

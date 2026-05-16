@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GeoDespacho | Central Operativa Forestal</title>
+    <meta
+      name="description"
+      content="Aplicacion GIS operacional para despacho preliminar de brigadas forestales."
+    />
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://tile.openstreetmap.org" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="operations-panel" aria-label="Panel operacional">
+        <header class="panel-header">
+          <div>
+            <p class="eyebrow">Central Operativa Forestal</p>
+            <h1>GeoDespacho</h1>
+          </div>
+          <span class="live-pill"><span aria-hidden="true"></span>ONLINE</span>
+        </header>
+
+        <section class="module module-incident" aria-labelledby="incident-title">
+          <div class="module-title-row">
+            <div>
+              <p class="section-kicker">Despacho</p>
+              <h2 id="incident-title">Nuevo foco</h2>
+            </div>
+            <button class="icon-button" type="button" id="demoFocusBtn" title="Cargar foco demo">
+              <i data-lucide="flame" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <form id="incidentForm" class="coordinate-form">
+            <div class="coordinate-mode wide-field" aria-label="Formato de coordenadas">
+              <button class="mode-button is-active" type="button" data-coordinate-mode="dms">GMS</button>
+              <button class="mode-button" type="button" data-coordinate-mode="decimal">Decimal</button>
+            </div>
+
+            <div id="dmsFields" class="dms-fields wide-field">
+              <fieldset>
+                <legend>Latitud</legend>
+                <div class="dms-row">
+                  <label>
+                    Grados
+                    <input id="latDegInput" inputmode="numeric" autocomplete="off" placeholder="37" />
+                  </label>
+                  <label>
+                    Min
+                    <input id="latMinInput" inputmode="numeric" autocomplete="off" placeholder="48" />
+                  </label>
+                  <label>
+                    Seg
+                    <input id="latSecInput" inputmode="decimal" autocomplete="off" placeholder="38.13" />
+                  </label>
+                  <label>
+                    Hem
+                    <select id="latHemInput">
+                      <option value="S" selected>S</option>
+                      <option value="N">N</option>
+                    </select>
+                  </label>
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend>Longitud</legend>
+                <div class="dms-row">
+                  <label>
+                    Grados
+                    <input id="lngDegInput" inputmode="numeric" autocomplete="off" placeholder="72" />
+                  </label>
+                  <label>
+                    Min
+                    <input id="lngMinInput" inputmode="numeric" autocomplete="off" placeholder="40" />
+                  </label>
+                  <label>
+                    Seg
+                    <input id="lngSecInput" inputmode="decimal" autocomplete="off" placeholder="26.06" />
+                  </label>
+                  <label>
+                    Hem
+                    <select id="lngHemInput">
+                      <option value="O" selected>O</option>
+                      <option value="W">W</option>
+                      <option value="E">E</option>
+                    </select>
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+
+            <div id="decimalFields" class="decimal-fields wide-field" hidden>
+              <label>
+                Latitud decimal
+                <input
+                  id="latInput"
+                  name="lat"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  placeholder="-37.6200"
+                />
+              </label>
+              <label>
+                Longitud decimal
+                <input
+                  id="lngInput"
+                  name="lng"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  placeholder="-72.1200"
+                />
+              </label>
+            </div>
+
+            <div class="coordinate-readout wide-field">
+              <span id="coordinateReadout">GMS: -- | Decimal: --</span>
+            </div>
+            <label class="wide-field">
+              Prioridad
+              <select id="priorityInput" name="priority">
+                <option value="Critica">Critica</option>
+                <option value="Alta" selected>Alta</option>
+                <option value="Media">Media</option>
+                <option value="Observacion">Observacion</option>
+              </select>
+            </label>
+            <button class="primary-action wide-field" type="submit">
+              <i data-lucide="radio-tower" aria-hidden="true"></i>
+              Calcular despacho
+            </button>
+          </form>
+          <p id="formFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="module" aria-labelledby="nearest-title">
+          <div class="section-kicker">Brigada sugerida</div>
+          <div id="nearestCard" class="nearest-card empty-state">
+            <h2 id="nearest-title">Sin foco activo</h2>
+            <p>Canal de despacho en espera de coordenadas.</p>
+          </div>
+          <div class="metric-grid" aria-label="Indicadores de despacho">
+            <div>
+              <span>Distancia</span>
+              <strong id="distanceMetric">--</strong>
+            </div>
+            <div>
+              <span>ETA</span>
+              <strong id="etaMetric">--</strong>
+            </div>
+            <div>
+              <span>Disponibles</span>
+              <strong id="availableMetric">--</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="module incident-list-module" aria-labelledby="active-incidents-title">
+          <div class="module-title-row compact">
+            <div>
+              <p class="section-kicker">Focos activos</p>
+              <h2 id="active-incidents-title">Registro operativo</h2>
+            </div>
+            <button class="icon-button" type="button" id="clearFociBtn" title="Eliminar focos activos">
+              <i data-lucide="eraser" aria-hidden="true"></i>
+            </button>
+          </div>
+          <ul id="incidentList" class="incident-list">
+            <li class="muted-row">Sin focos activos.</li>
+          </ul>
+        </section>
+
+        <section class="module layer-module" aria-labelledby="layers-title">
+          <div class="module-title-row compact">
+            <div>
+              <p class="section-kicker">Capas GIS</p>
+              <h2 id="layers-title">Operacionales</h2>
+            </div>
+            <button class="icon-button" type="button" id="fitMapBtn" title="Ver area operacional">
+              <i data-lucide="maximize" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="base-map-switch" aria-label="Mapa base">
+            <label>
+              <input type="radio" name="baseLayer" value="standard" data-base-layer checked />
+              <span>Mapa</span>
+            </label>
+            <label>
+              <input type="radio" name="baseLayer" value="satellite" data-base-layer />
+              <span>Satelital</span>
+            </label>
+          </div>
+          <div class="layer-list">
+            <label>
+              <input type="checkbox" data-layer-toggle="brigades" checked />
+              <span class="swatch swatch-brigade"></span>
+              Brigadas
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="towers" checked />
+              <span class="swatch swatch-tower"></span>
+              Torres
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="protected" />
+              <span class="swatch swatch-protected"></span>
+              SNASPE
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="critical" />
+              <span class="swatch swatch-critical"></span>
+              Estructuras criticas
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="water_sources" />
+              <span class="swatch swatch-water"></span>
+              Fuentes de agua
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="communes" />
+              <span class="swatch swatch-communes"></span>
+              Comunas
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="technical" checked />
+              <span class="swatch swatch-technical"></span>
+              Personal tecnico
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="hydrography" />
+              <span class="swatch swatch-hydrography"></span>
+              Hidrografia
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="roads" />
+              <span class="swatch swatch-roads"></span>
+              Caminos
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="properties" />
+              <span class="swatch swatch-properties"></span>
+              Predios empresa
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="localities" />
+              <span class="swatch swatch-localities"></span>
+              Localidades
+            </label>
+            <label>
+              <input type="checkbox" data-layer-toggle="powerlines" />
+              <span class="swatch swatch-powerlines"></span>
+              Linea electrica
+            </label>
+          </div>
+        </section>
+
+        <section class="module exposure-module" aria-labelledby="exposure-title">
+          <div class="section-kicker">Radio operacional</div>
+          <div id="exposureCard" class="exposure-card empty-state">
+            <h2 id="exposure-title">Contexto visible - 5 km</h2>
+            <p>El analisis se activa al crear o seleccionar un foco.</p>
+          </div>
+        </section>
+
+        <section class="module import-module" aria-labelledby="import-title">
+          <div class="module-title-row compact">
+            <div>
+              <p class="section-kicker">Actualizacion</p>
+              <h2 id="import-title">Cargar capa</h2>
+            </div>
+            <button class="icon-button" type="button" id="clearImportsBtn" title="Quitar capas cargadas">
+              <i data-lucide="trash-2" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="import-form">
+            <label class="wide-field">
+              Archivo
+              <input id="layerFileInput" type="file" accept=".geojson,.json,.kml,.kmz,.csv" />
+            </label>
+            <label>
+              Tipo
+              <select id="layerTypeInput">
+                <option value="general">General</option>
+                <option value="brigades">Brigadas</option>
+                <option value="towers">Torres</option>
+                <option value="critical">Estructuras criticas</option>
+                <option value="technical">Personal tecnico</option>
+                <option value="protected">Areas protegidas</option>
+                <option value="water_sources">Fuentes de agua</option>
+                <option value="communes">Comunas</option>
+                <option value="hydrography">Hidrografia</option>
+                <option value="roads">Caminos</option>
+                <option value="properties">Predios</option>
+                <option value="localities">Localidades</option>
+                <option value="powerlines">Linea electrica</option>
+              </select>
+            </label>
+            <label>
+              Nombre
+              <input id="layerNameInput" autocomplete="off" placeholder="Capa operacional" />
+            </label>
+            <button class="secondary-action wide-field" type="button" id="importLayerBtn">
+              <i data-lucide="upload" aria-hidden="true"></i>
+              Cargar al mapa
+            </button>
+          </div>
+          <p id="importFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+          <ul id="importedLayerList" class="imported-layer-list">
+            <li class="muted-row">Sin capas externas.</li>
+          </ul>
+        </section>
+
+        <section class="module queue-module" aria-labelledby="queue-title">
+          <div class="section-kicker">Ranking</div>
+          <h2 id="queue-title">Brigadas cercanas</h2>
+          <ol id="candidateList" class="candidate-list">
+            <li class="muted-row">Esperando coordenadas.</li>
+          </ol>
+        </section>
+
+        <footer class="panel-footer">
+          <span id="datasetStatus">Cargando datos GIS...</span>
+          <span>Demo GitHub Pages</span>
+        </footer>
+      </aside>
+
+      <main class="map-stage">
+        <div class="topbar" aria-label="Estado operacional">
+          <div>
+            <span class="topbar-label">Region operacional</span>
+            <strong>Biobio - Araucania</strong>
+          </div>
+          <div>
+            <span class="topbar-label">Torres activas</span>
+            <strong id="towerMetric">--</strong>
+          </div>
+          <div>
+            <span class="topbar-label">Areas SNASPE</span>
+            <strong id="protectedMetric">--</strong>
+          </div>
+          <button class="map-action" type="button" id="locateBtn">
+            <i data-lucide="crosshair" aria-hidden="true"></i>
+            Mi ubicacion
+          </button>
+        </div>
+        <div id="map" aria-label="Mapa operacional GeoDespacho"></div>
+        <div class="map-console" aria-live="polite">
+          <span id="consoleText">Canal GIS listo. Capas base operacionales cargadas.</span>
+        </div>
+      </main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>

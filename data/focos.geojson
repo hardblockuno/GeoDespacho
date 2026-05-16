@@ -1,0 +1,45 @@
+{
+  "type": "FeatureCollection",
+  "name": "focos_simulados_geodespacho",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "codigo": "FC-001",
+        "nombre": "Foco simulado Quilleco",
+        "prioridad": "Alta",
+        "estado": "En observacion"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-72.4511, -37.6782]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "codigo": "FC-002",
+        "nombre": "Foco simulado Ercilla",
+        "prioridad": "Media",
+        "estado": "Control preliminar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-72.3834, -38.0584]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "codigo": "FC-003",
+        "nombre": "Foco simulado Santa Barbara",
+        "prioridad": "Critica",
+        "estado": "Despacho requerido"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-72.0226, -37.6659]
+      }
+    }
+  ]
+}
