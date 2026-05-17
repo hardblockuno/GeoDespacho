@@ -51,6 +51,128 @@ const ROUTING = {
   timeoutMs: 9000,
 };
 
+const MARKER_SYMBOLS = {
+  tower: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 3v18" />
+      <path d="m7 21 5-18 5 18" />
+      <path d="M8.6 9h6.8" />
+      <path d="M7.4 14h9.2" />
+      <path d="M5.2 6.3a8.4 8.4 0 0 1 13.6 0" />
+      <path d="M8 8.7a5.1 5.1 0 0 1 8 0" />
+    </svg>
+  `,
+  brigade: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 14V9.5A2.5 2.5 0 0 1 6.5 7H15l3 3h2v4" />
+      <path d="M7 17h10" />
+      <circle cx="7" cy="17" r="2" />
+      <circle cx="17" cy="17" r="2" />
+      <path d="M8 7V5h4v2" />
+    </svg>
+  `,
+  tanker: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M3 14V9h9.5a3.5 3.5 0 0 1 0 7H3v-2Z" />
+      <path d="M16 11h3l2 3v2h-5" />
+      <circle cx="7" cy="17" r="2" />
+      <circle cx="18" cy="17" r="2" />
+      <path d="M8 9c-1.1 1.2-1.7 2.1-1.7 2.8a1.7 1.7 0 0 0 3.4 0C9.7 11.1 9.1 10.2 8 9Z" />
+    </svg>
+  `,
+  skidder: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 14h8l3-4h4v4" />
+      <path d="M8 14V8h4l2 2" />
+      <path d="M15 10l4-4" />
+      <path d="M19 6h2" />
+      <circle cx="7" cy="17" r="3" />
+      <circle cx="18" cy="17" r="2" />
+    </svg>
+  `,
+  pickup: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M3 15V9h9l2 3h4l3 3v2h-3" />
+      <path d="M14 12V9" />
+      <path d="M3 17h3" />
+      <path d="M10 17h5" />
+      <circle cx="8" cy="17" r="2" />
+      <circle cx="17" cy="17" r="2" />
+    </svg>
+  `,
+  air: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 12h16" />
+      <path d="M12 5v14" />
+      <path d="m7 8 5 4-5 4" />
+      <path d="m17 8-5 4 5 4" />
+    </svg>
+  `,
+  technical: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M6 10a6 6 0 0 1 12 0" />
+      <path d="M5 10h14" />
+      <path d="M8 10V8" />
+      <path d="M16 10V8" />
+      <path d="M8 14a4 4 0 0 0 8 0" />
+      <path d="M6 21a6 6 0 0 1 12 0" />
+    </svg>
+  `,
+  critical: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 3 2.8 20h18.4L12 3Z" />
+      <path d="M12 8v5" />
+      <path d="M12 17h.01" />
+    </svg>
+  `,
+  protected: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 3v18" />
+      <path d="M12 5c-4 2.5-5.5 5-5.5 7 0 2.2 1.8 4 4 4H12" />
+      <path d="M12 5c4 2.5 5.5 5 5.5 7 0 2.2-1.8 4-4 4H12" />
+    </svg>
+  `,
+  water: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 3C8.5 7.5 6.5 10.5 6.5 14a5.5 5.5 0 0 0 11 0C17.5 10.5 15.5 7.5 12 3Z" />
+    </svg>
+  `,
+  commune: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 5h16v14H4z" />
+      <path d="M9 5v14" />
+      <path d="M15 5v14" />
+      <path d="M4 12h16" />
+    </svg>
+  `,
+  locality: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="m3 11 9-7 9 7" />
+      <path d="M5 10v10h14V10" />
+      <path d="M10 20v-6h4v6" />
+    </svg>
+  `,
+  property: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 6h16v12H4z" />
+      <path d="m4 18 5-5 4 3 7-8" />
+      <path d="M8 6v12" />
+      <path d="M16 6v12" />
+    </svg>
+  `,
+  powerline: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="m13 2-7 12h6l-1 8 7-12h-6l1-8Z" />
+    </svg>
+  `,
+  general: `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="7" />
+      <path d="M12 8v4l3 2" />
+    </svg>
+  `,
+};
+
 const EXPOSURE_RADIUS_KM = 5;
 const EXPOSURE_INDEX_URL = "./data/exposure_index.json";
 const WIND_VECTOR_LENGTH_KM = 4.2;
@@ -383,7 +505,7 @@ function renderLayers() {
   L.geoJSON(state.data.towers, {
     pointToLayer: (feature, latlng) =>
       L.marker(latlng, {
-        icon: createDivIcon("tower", "T"),
+        icon: createDivIcon("tower", "tower"),
       }),
     onEachFeature: (feature, layer) => {
       const props = feature.properties;
@@ -420,9 +542,8 @@ function renderLayers() {
 
   state.layers.brigades = L.geoJSON(state.data.brigades, {
     pointToLayer: (feature, latlng) => {
-      const props = normalizeBrigadeProperties(feature.properties);
       return L.marker(latlng, {
-        icon: createDivIcon(props.disponible ? "brigade" : "brigade offline", "B"),
+        icon: createDivIcon(getMarkerClass("brigades", feature), getMarkerSymbol("brigades", feature)),
       });
     },
     onEachFeature: (feature, layer) => {
@@ -508,14 +629,19 @@ async function loadOptionalLayer(layerName) {
   els.consoleText.textContent = `Capa oficial ${getLayerTypeLabel(layerName)} cargada (${geojson.features.length} elementos).`;
 }
 
-function createDivIcon(className, text) {
+function createDivIcon(className, symbol) {
+  const markerContent = getMarkerSymbolHtml(symbol);
   return L.divIcon({
     className: "",
-    html: `<span class="marker-dot ${className}">${text}</span>`,
+    html: `<span class="marker-dot ${className}">${markerContent}</span>`,
     iconSize: [34, 34],
     iconAnchor: [17, 17],
     popupAnchor: [0, -16],
   });
+}
+
+function getMarkerSymbolHtml(symbol) {
+  return MARKER_SYMBOLS[symbol] || `<span class="marker-label">${escapeHtml(symbol || "")}</span>`;
 }
 
 function createIncidentFromForm() {
@@ -2614,7 +2740,7 @@ function createOperationalGeoJsonLayer(geojson, layerType) {
     style: (feature) => getGeometryStyle(layerType, feature),
     pointToLayer: (feature, latlng) =>
       L.marker(latlng, {
-        icon: createDivIcon(getMarkerClass(layerType, feature), getMarkerLetter(layerType)),
+        icon: createDivIcon(getMarkerClass(layerType, feature), getMarkerSymbol(layerType, feature)),
       }),
     onEachFeature: (feature, layer) => {
       bindOperationalPopup(feature, layer, layerType);
@@ -2675,7 +2801,10 @@ function getLayerColor(layerType, feature) {
 
 function getMarkerClass(layerType, feature) {
   if (layerType === "brigades") {
-    return normalizeBrigadeProperties(feature.properties).disponible ? "brigade" : "brigade offline";
+    const props = normalizeBrigadeProperties(feature.properties);
+    const resourceClass = getBrigadeResourceKind(feature.properties);
+    const resourceSuffix = resourceClass === "brigade" ? "" : ` ${resourceClass}`;
+    return `brigade${resourceSuffix}${props.disponible ? "" : " offline"}`;
   }
 
   const classes = {
@@ -2696,24 +2825,58 @@ function getMarkerClass(layerType, feature) {
   return classes[layerType] || classes.general;
 }
 
-function getMarkerLetter(layerType) {
-  const letters = {
-    brigades: "B",
-    towers: "T",
-    critical: "C",
-    technical: "P",
-    protected: "A",
-    water_sources: "W",
-    communes: "M",
-    hydrography: "H",
-    roads: "R",
-    properties: "P",
-    localities: "L",
-    powerlines: "E",
-    general: "G",
+function getMarkerSymbol(layerType, feature) {
+  if (layerType === "brigades") {
+    return getBrigadeResourceKind(feature.properties);
+  }
+
+  const symbols = {
+    towers: "tower",
+    critical: "critical",
+    technical: "technical",
+    protected: "protected",
+    water_sources: "water",
+    communes: "commune",
+    hydrography: "water",
+    roads: "general",
+    properties: "property",
+    localities: "locality",
+    powerlines: "powerline",
+    general: "general",
   };
 
-  return letters[layerType] || "G";
+  return symbols[layerType] || symbols.general;
+}
+
+function getBrigadeResourceKind(properties = {}) {
+  const text = normalizeResourceSearchText(properties);
+
+  if (/(^|[^a-z0-9])(cc|c c|c\.c\.?)([^a-z0-9]|$)|cisterna|aljibe/.test(text)) {
+    return "tanker";
+  }
+
+  if (/skidder|skider|tractor|maquinaria|arrastrador/.test(text)) {
+    return "skidder";
+  }
+
+  if (/heliataque|helicopter|helicoptero|aereo|avion/.test(text)) {
+    return "air";
+  }
+
+  if (/camioneta|pickup|4x4|respuesta rapida|furgon/.test(text)) {
+    return "pickup";
+  }
+
+  return "brigade";
+}
+
+function normalizeResourceSearchText(properties = {}) {
+  return Object.values(properties)
+    .filter((value) => value !== null && value !== undefined)
+    .join(" ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 function bindOperationalPopup(feature, layer, layerType) {

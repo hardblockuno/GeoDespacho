@@ -1126,20 +1126,47 @@ h2 {
   border-radius: 50%;
   color: #ffffff;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-  font-size: 14px;
-  font-weight: 900;
+}
+
+.marker-dot svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.marker-label {
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .marker-dot.brigade {
   background: var(--green);
 }
 
-.marker-dot.brigade.offline {
-  background: #69767b;
+.marker-dot.brigade.tanker {
+  background: #1f7ec8;
+}
+
+.marker-dot.brigade.skidder {
+  background: #d47a22;
+}
+
+.marker-dot.brigade.pickup {
+  background: #3f8f72;
+}
+
+.marker-dot.brigade.air {
+  background: #7d88e8;
 }
 
 .marker-dot.tower {
   background: var(--cyan);
+  color: #062532;
 }
 
 .marker-dot.critical {
@@ -1181,6 +1208,11 @@ h2 {
   background: #6f7e84;
 }
 
+.marker-dot.brigade.offline {
+  background: #69767b;
+  color: rgba(255, 255, 255, 0.86);
+}
+
 .marker-dot.active-fire {
   width: 34px;
   height: 34px;
@@ -1197,6 +1229,10 @@ h2 {
     0 0 0 9px rgba(241, 169, 59, 0.2),
     0 0 0 4px rgba(226, 77, 66, 0.3),
     0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.marker-dot.active-fire .marker-label {
+  font-size: 12px;
 }
 
 @media (max-width: 980px) {

@@ -143,6 +143,8 @@ Las capas no visibles por defecto se cargan bajo demanda cuando el usuario las a
 C:\Users\lucas\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\build-technical-points.js
 ```
 
+Los marcadores del mapa usan iconos SVG operacionales. La app clasifica recursos terrestres por los textos de sus propiedades, por ejemplo `cisterna`, `aljibe`, `camioneta`, `heliataque`, `skidder` o `tractor`, para mostrar simbolos distintos cuando esas categorias existan en una capa oficial o importada.
+
 El analisis de contexto de 5 km usa:
 
 ```text
