@@ -145,6 +145,8 @@ C:\Users\lucas\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin
 
 Los marcadores del mapa usan iconos SVG operacionales. La app clasifica recursos terrestres por los textos de sus propiedades, por ejemplo `cisterna`, `aljibe`, `camioneta`, `heliataque`, `skidder` o `tractor`, para mostrar simbolos distintos cuando esas categorias existan en una capa oficial o importada.
 
+Las brigadas muestran una etiqueta permanente con su nombre/codigo para reconocer rapidamente cada unidad en el mapa. La etiqueta se apaga automaticamente al desactivar la capa `Brigadas`.
+
 El analisis de contexto de 5 km usa:
 
 ```text

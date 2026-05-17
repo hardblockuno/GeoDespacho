@@ -557,6 +557,7 @@ function renderLayers() {
         ${props.poa_proveedor ? `<p class="popup-line"><strong>Proveedor:</strong> ${props.poa_proveedor}</p>` : ""}
         ${props.poa_patente ? `<p class="popup-line"><strong>Patente:</strong> ${props.poa_patente}</p>` : ""}
       `);
+      bindBrigadeMapLabel(layer, props);
     },
   });
   addLayerIfChecked("brigades");
@@ -642,6 +643,19 @@ function createDivIcon(className, symbol) {
 
 function getMarkerSymbolHtml(symbol) {
   return MARKER_SYMBOLS[symbol] || `<span class="marker-label">${escapeHtml(symbol || "")}</span>`;
+}
+
+function bindBrigadeMapLabel(layer, props) {
+  if (typeof layer.bindTooltip !== "function") return;
+
+  const label = props.nombre || getFeatureName(props, "Brigada");
+  layer.bindTooltip(escapeHtml(label), {
+    permanent: true,
+    direction: "right",
+    offset: [18, 0],
+    opacity: 1,
+    className: `brigade-map-label${props.disponible ? "" : " brigade-map-label-offline"}`,
+  });
 }
 
 function createIncidentFromForm() {
@@ -2744,6 +2758,9 @@ function createOperationalGeoJsonLayer(geojson, layerType) {
       }),
     onEachFeature: (feature, layer) => {
       bindOperationalPopup(feature, layer, layerType);
+      if (layerType === "brigades" && feature.geometry?.type === "Point") {
+        bindBrigadeMapLabel(layer, normalizeBrigadeProperties(feature.properties));
+      }
       if (layerType === "towers" && feature.geometry?.type === "Point") {
         const radiusKm = normalizeNumber(feature.properties?.radio_km || feature.properties?.radio || "0");
         if (radiusKm > 0 && typeof layer.getLatLng === "function") {
