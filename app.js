@@ -1,12 +1,22 @@
-const DATASETS = {
+const DATASET_URLS = {
   brigades: "./data/brigadas.geojson",
   towers: "./data/torres.geojson",
   protected: "./data/snaspe.geojson",
   critical: "./data/estructuras_criticas.geojson",
   water_sources: "./data/fuentes_agua.geojson",
   communes: "./data/comunas.geojson",
-  technical: "./data/personal_tecnico.geojson",
+  technical: "./data/personal_tecnico_puntos.geojson",
+  hydrography: "./data/hidrografia.geojson",
+  roads: "./data/caminos.geojson",
+  properties: "./data/predios_empresa.geojson",
+  localities: "./data/localidades.geojson",
+  powerlines: "./data/lineas_electricas.geojson",
 };
+
+const INITIAL_DATASETS = ["brigades", "towers", "communes", "technical"];
+const OPTIONAL_DATASETS = Object.fromEntries(
+  Object.entries(DATASET_URLS).filter(([layerName]) => !INITIAL_DATASETS.includes(layerName)),
+);
 
 const BASE_LAYERS = {
   standard: {
@@ -28,14 +38,6 @@ const BASE_LAYERS = {
   },
 };
 
-const OPTIONAL_DATASETS = {
-  hydrography: "./data/hidrografia.geojson",
-  roads: "./data/caminos.geojson",
-  properties: "./data/predios_empresa.geojson",
-  localities: "./data/localidades.geojson",
-  powerlines: "./data/lineas_electricas.geojson",
-};
-
 const PRIORITY_FACTORS = {
   Critica: 0.9,
   Alta: 1,
@@ -50,6 +52,7 @@ const ROUTING = {
 };
 
 const EXPOSURE_RADIUS_KM = 5;
+const EXPOSURE_INDEX_URL = "./data/exposure_index.json";
 const WIND_VECTOR_LENGTH_KM = 4.2;
 const LOCATION_LABEL_BEARING = 280;
 const LOCATION_LABEL_DISTANCE_FACTOR = 1.02;
@@ -90,6 +93,8 @@ const state = {
     powerlines: null,
   },
   analysisLoads: {},
+  exposureIndex: null,
+  exposureIndexLoad: null,
   layers: {},
   baseLayers: {},
   activeBaseLayer: "standard",
@@ -343,7 +348,8 @@ function bindEvents() {
 async function loadAllData() {
   try {
     const entries = await Promise.all(
-      Object.entries(DATASETS).map(async ([key, url]) => {
+      INITIAL_DATASETS.map(async (key) => {
+        const url = DATASET_URLS[key];
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`No se pudo cargar ${url}`);
@@ -360,7 +366,8 @@ async function loadAllData() {
     updateDatasetMetrics();
     fitOperationalArea();
     scheduleMapRefresh();
-    els.datasetStatus.textContent = "Datos GIS cargados";
+    warmExposureIndex();
+    els.datasetStatus.textContent = "Capas base cargadas";
   } catch (error) {
     els.datasetStatus.textContent = "Error al cargar datos GIS";
     els.consoleText.textContent = error.message;
@@ -368,24 +375,6 @@ async function loadAllData() {
 }
 
 function renderLayers() {
-  state.layers.protected = L.geoJSON(state.data.protected, {
-    style: (feature) => ({
-      color: feature.properties.color || "#78b866",
-      weight: 1.4,
-      fillColor: feature.properties.color || "#78b866",
-      fillOpacity: 0.18,
-    }),
-    onEachFeature: (feature, layer) => {
-      const props = feature.properties || {};
-      layer.bindPopup(`
-        <h3 class="popup-title">${props.nombre}</h3>
-        <p class="popup-line"><strong>Categoria:</strong> ${props.categoria || props.tipo || "SNASPE"}</p>
-        <p class="popup-line"><strong>Estado:</strong> ${props.estado || props.riesgo || "Vigente"}</p>
-      `);
-    },
-  });
-  addLayerIfChecked("protected");
-
   state.layers.towers = L.layerGroup();
   L.geoJSON(state.data.towers, {
     pointToLayer: (feature, latlng) =>
@@ -446,26 +435,6 @@ function renderLayers() {
     },
   });
   addLayerIfChecked("brigades");
-
-  state.layers.critical = L.geoJSON(state.data.critical, {
-    pointToLayer: (feature, latlng) =>
-      L.marker(latlng, {
-        icon: createDivIcon("critical", "C"),
-      }),
-    onEachFeature: (feature, layer) => {
-      const props = feature.properties;
-      layer.bindPopup(`
-        <h3 class="popup-title">${props.nombre}</h3>
-        <p class="popup-line"><strong>Tipo:</strong> ${props.tipo}</p>
-        <p class="popup-line"><strong>Criticidad:</strong> ${props.criticidad}</p>
-        <p class="popup-line"><strong>Estado:</strong> ${props.estado}</p>
-      `);
-    },
-  });
-  addLayerIfChecked("critical");
-
-  state.layers.water_sources = createOperationalGeoJsonLayer(state.data.water_sources, "water_sources");
-  addLayerIfChecked("water_sources");
 
   state.layers.communes = createOperationalGeoJsonLayer(state.data.communes, "communes");
   addLayerIfChecked("communes");
@@ -871,18 +840,29 @@ async function resolveIncidentContext(incidentId) {
   if (!incident) return;
 
   try {
-    const localitiesGeoJson = await getAnalysisGeoJson("localities", EXPOSURE_DATASETS.localities).catch(() => null);
+    const exposureIndex = await getExposureIndex().catch(() => null);
+    const localitiesIndex = exposureIndex?.layers?.localities || null;
+    const localitiesGeoJson = localitiesIndex
+      ? null
+      : await getAnalysisGeoJson("localities", EXPOSURE_DATASETS.localities).catch(() => null);
     const currentIncident = getIncidentById(incidentId);
     if (!currentIncident) return;
 
+    let locality = null;
+    if (localitiesIndex) {
+      locality = findContextIndexFeature(localitiesIndex, currentIncident.lat, currentIncident.lng, {
+        maxDistanceKm: 12,
+      });
+    } else if (localitiesGeoJson) {
+      locality = findContextFeature(localitiesGeoJson, currentIncident.lat, currentIncident.lng, {
+        maxDistanceKm: 12,
+        nameKeys: ["nombre", "NOMBRE", "LOCALIDAD", "Localidad", "NOM_LOC", "SECTOR"],
+      });
+    }
+
     currentIncident.context = {
       status: "ready",
-      locality: localitiesGeoJson
-        ? findContextFeature(localitiesGeoJson, currentIncident.lat, currentIncident.lng, {
-            maxDistanceKm: 12,
-            nameKeys: ["nombre", "NOMBRE", "LOCALIDAD", "Localidad", "NOM_LOC", "SECTOR"],
-          })
-        : null,
+      locality,
       commune: state.data.communes
         ? findContextFeature(state.data.communes, currentIncident.lat, currentIncident.lng, {
             maxDistanceKm: 60,
@@ -945,6 +925,67 @@ function findContextFeature(geojson, lat, lng, options = {}) {
   }
 
   return nearest && nearest.distanceKm <= maxDistanceKm ? nearest : null;
+}
+
+function findContextIndexFeature(layerIndex, lat, lng, options = {}) {
+  const maxDistanceKm = options.maxDistanceKm ?? Number.POSITIVE_INFINITY;
+  let nearest = null;
+
+  for (const item of layerIndex?.items || []) {
+    if (!isMeaningfulName(item.name)) continue;
+
+    const distanceKm = distanceToIndexedItemKm(lat, lng, item);
+    if (!Number.isFinite(distanceKm)) continue;
+
+    const match = {
+      name: item.name,
+      distanceKm,
+      matchType: distanceKm === 0 ? "inside" : "nearest",
+      properties: item.properties || {},
+    };
+
+    if (distanceKm === 0) return match;
+    if (!nearest || distanceKm < nearest.distanceKm) {
+      nearest = match;
+    }
+  }
+
+  return nearest && nearest.distanceKm <= maxDistanceKm ? nearest : null;
+}
+
+function getIndexedItemName(item, fallback) {
+  return item.name || item.label || fallback;
+}
+
+function distanceToIndexedItemKm(lat, lng, item) {
+  if (Array.isArray(item.bbox) && item.bbox.length === 4) {
+    return distanceToBBoxKm(lat, lng, item.bbox);
+  }
+
+  if (Number.isFinite(item.lat) && Number.isFinite(item.lng)) {
+    return haversineKm(lat, lng, item.lat, item.lng);
+  }
+
+  return Number.POSITIVE_INFINITY;
+}
+
+function distanceToBBoxKm(lat, lng, bbox) {
+  const [minLng, minLat, maxLng, maxLat] = bbox;
+  if ([minLng, minLat, maxLng, maxLat].some((value) => !Number.isFinite(value))) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  if (lng >= minLng && lng <= maxLng && lat >= minLat && lat <= maxLat) {
+    return 0;
+  }
+
+  const nearestLng = clamp(lng, minLng, maxLng);
+  const nearestLat = clamp(lat, minLat, maxLat);
+  return haversineKm(lat, lng, nearestLat, nearestLng);
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function featureContainsLatLng(geometry, lat, lng) {
@@ -1655,8 +1696,14 @@ async function analyzeIncidentExposure(incidentId) {
   renderIncidentList();
 
   try {
+    const exposureIndex = await getExposureIndex().catch(() => null);
     const summaryEntries = await Promise.all(
       Object.entries(EXPOSURE_DATASETS).map(async ([layerType, config]) => {
+        const indexedLayer = exposureIndex?.layers?.[layerType];
+        if (indexedLayer?.items?.length) {
+          return [layerType, analyzeExposureIndexLayer(indexedLayer, layerType, incident, config)];
+        }
+
         const geojson = await getAnalysisGeoJson(layerType, config);
         return [layerType, analyzeGeoJsonWithinRadius(geojson, layerType, incident, config)];
       }),
@@ -1705,8 +1752,8 @@ async function getAnalysisGeoJson(layerType, config) {
     return state.analysisLoads[layerType];
   }
 
-  const url = OPTIONAL_DATASETS[layerType];
-  if (!url || config.source !== "optional") {
+  const url = DATASET_URLS[layerType];
+  if (!url) {
     throw new Error(`No hay fuente de analisis para ${getLayerTypeLabel(layerType)}.`);
   }
 
@@ -1720,6 +1767,63 @@ async function getAnalysisGeoJson(layerType, config) {
   });
 
   return state.analysisLoads[layerType];
+}
+
+async function getExposureIndex() {
+  if (state.exposureIndex) {
+    return state.exposureIndex;
+  }
+
+  if (state.exposureIndexLoad) {
+    return state.exposureIndexLoad;
+  }
+
+  state.exposureIndexLoad = fetch(EXPOSURE_INDEX_URL)
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error("No se pudo cargar el indice de exposicion.");
+      }
+      const index = await response.json();
+      state.exposureIndex = index;
+      return index;
+    })
+    .catch((error) => {
+      state.exposureIndexLoad = null;
+      throw error;
+    });
+
+  return state.exposureIndexLoad;
+}
+
+function warmExposureIndex() {
+  const schedule = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1400));
+  schedule(() => {
+    getExposureIndex().catch(() => {});
+  });
+}
+
+function analyzeExposureIndexLayer(layerIndex, layerType, incident, config) {
+  const matches = (layerIndex.items || [])
+    .map((item) => {
+      const distanceKm = distanceToIndexedItemKm(incident.lat, incident.lng, item);
+      if (!Number.isFinite(distanceKm) || distanceKm > EXPOSURE_RADIUS_KM) {
+        return null;
+      }
+
+      return {
+        name: getIndexedItemName(item, getLayerTypeLabel(layerType)),
+        distanceKm,
+        properties: item.properties || {},
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  return {
+    label: config.label,
+    count: matches.length,
+    nearest: matches.slice(0, config.limit),
+  };
 }
 
 function analyzeGeoJsonWithinRadius(geojson, layerType, incident, config) {

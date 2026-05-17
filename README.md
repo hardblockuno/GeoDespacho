@@ -43,6 +43,7 @@ data/estructuras_criticas.geojson
 data/fuentes_agua.geojson
 data/comunas.geojson
 data/personal_tecnico.geojson
+data/personal_tecnico_puntos.geojson
 data/hidrografia.geojson
 data/caminos.geojson
 data/predios_empresa.geojson
@@ -122,6 +123,37 @@ Capas oficiales disponibles bajo carga diferida desde el panel:
 ```
 
 `3. Roles_IX.kmz` queda convertido en `capas_oficiales_2025_2026/geojson/3_roles_ix.geojson`, pero no se carga automaticamente porque genera un GeoJSON de mas de 200 MB. Para usarlo en produccion conviene simplificarlo, filtrarlo por comuna/area o publicarlo como teselas vectoriales.
+
+## Rendimiento
+
+La web carga al inicio solo las capas necesarias para operar:
+
+```text
+brigadas
+torres
+comunas como borde contextual
+personal tecnico optimizado como puntos
+```
+
+Las capas no visibles por defecto se cargan bajo demanda cuando el usuario las activa en el panel.
+
+`data/personal_tecnico.geojson` conserva la capa oficial completa. La app usa `data/personal_tecnico_puntos.geojson` para el panel operativo porque evita cargar poligonos comunales innecesarios al inicio. Si se actualiza la capa oficial completa, regenera la version liviana con:
+
+```powershell
+C:\Users\lucas\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\build-technical-points.js
+```
+
+El analisis de contexto de 5 km usa:
+
+```text
+data/exposure_index.json
+```
+
+Ese indice resume infraestructura critica, predios y localidades con bbox/centroide, evitando descargar y analizar todos los GeoJSON pesados en cada foco. Cuando se actualicen `data/estructuras_criticas.geojson`, `data/predios_empresa.geojson` o `data/localidades.geojson`, regenera el indice con:
+
+```powershell
+C:\Users\lucas\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\build-exposure-index.js
+```
 
 Antes de reemplazar las capas activas se guardo respaldo en:
 
