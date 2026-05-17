@@ -288,13 +288,17 @@ function bindEvents() {
           }
         }
         const layer = state.layers[layerName];
-        if (!layer) return;
-        layer.addTo(state.map);
+        if (layer) {
+          layer.addTo(state.map);
+        }
       } else {
         const layer = state.layers[layerName];
-        if (!layer) return;
-        layer.remove();
+        if (layer) {
+          layer.remove();
+        }
       }
+
+      syncBoundaryContextLayer();
     });
   });
 
@@ -459,7 +463,24 @@ function renderBoundaryContextLayer() {
       fillOpacity: 0,
       dashArray: "6 7",
     },
-  }).addTo(state.map);
+  });
+  syncBoundaryContextLayer();
+}
+
+function syncBoundaryContextLayer() {
+  if (!state.boundaryLayer || !state.map) return;
+
+  const operationalCommunesLayer = state.layers.communes;
+  const isOperationalLayerVisible = operationalCommunesLayer && state.map.hasLayer(operationalCommunesLayer);
+
+  if (isOperationalLayerVisible) {
+    state.boundaryLayer.remove();
+    return;
+  }
+
+  if (!state.map.hasLayer(state.boundaryLayer)) {
+    state.boundaryLayer.addTo(state.map);
+  }
 }
 
 function addLayerIfChecked(layerName) {
